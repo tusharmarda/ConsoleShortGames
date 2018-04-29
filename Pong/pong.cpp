@@ -1,6 +1,7 @@
+#include <conio.h>
 #include <iostream>
 #include <time.h>
-#include <conio.h>
+#include <Windows.h>
 using namespace std;
 enum PongDirectionX {LEFT = -1, STOPX = 0, RIGHT = 1};
 enum PongDirectionY {UP = -1, STOPY = 0, DOWN = 1};
@@ -92,30 +93,119 @@ private:
 	PongBall* ball;
 	PongPaddle* paddle1;
 	PongPaddle* paddle2;
-public:
-	PongManager(int width, int height, string player1, string player2)
+	int ballX, ballY, p1Y, p2Y;
+	char cEmptySpace, cWall, cPaddle, cBall;
+	HANDLE hOut;
+	void drawInit()
 	{
-		srand(time(NULL));
-		this->width = (2 * width) + 1;
-		this->height = (2 * height) + 1;
-		score1 = score2 = 0;
-		ball = new PongBall(width, height);
-		paddle1 = new PongPaddle(height, player1);
-		paddle2 = new PongPaddle(height, player2);
-		paddle1Up = 'w';
-		paddle1Down = 's';
-		paddle2Up = 'i';
-		paddle2Down = 'k';
-		quit = 'q';
-		gameOver = false;
+		cEmptySpace = ' ';
+		cWall = '\xB2';
+		cPaddle = '\xDB';
+		cBall = 'o';
+		hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+		CONSOLE_CURSOR_INFO lpCursor;	
+		lpCursor.bVisible = false;
+		lpCursor.dwSize = 1;
+		SetConsoleCursorInfo(hOut,&lpCursor);
+		COORD position;
+		position.X = 0;
+		position.Y = 0;
+		SetConsoleCursorPosition(hOut, position);
+		for (int j = 0; j < width + 4; j++)
+			cout << cWall;
+		cout << endl;
+		for (int i = 0; i < height; i++)
+		{
+			cout << cWall << cEmptySpace;
+			for (int j = 0; j < width; j++)
+			{
+				if (i == ball->getY() && j == ball->getX())
+					cout << cBall;
+				else if (j == 0 && paddle1->getY() - 2 <= i && i <= paddle1->getY() + 2)
+					cout << cPaddle;
+				else if (j == width - 1 && paddle2->getY() - 2 <= i && i <= paddle2->getY() + 2)
+					cout << cPaddle;
+				else
+					cout << cEmptySpace;
+			}
+			cout << cEmptySpace << cWall << endl;
+		}
+		for (int j = 0; j < width + 4; j++)
+			cout << cWall;
+		cout << endl << ' ';
+		cout << paddle1->getName();
+		for (int i = 0; i < width + 2 - paddle1->getName().size() - paddle2->getName().size(); i++)
+			cout << ' ';
+		cout << paddle2->getName() << ' ' << endl << ' ';
+		for (int i = 0; i < (paddle1->getName().size() - to_string(score1).size()) / 2; i++)
+			cout << ' ';
+		cout << score1;
+		for (int i = 0; i < paddle1->getName().size() - ((paddle1->getName().size() - to_string(score1).size()) / 2) - to_string(score1).size(); i++)
+			cout << ' ';
+		for (int i = 0; i < width + 2 - paddle1->getName().size() - paddle2->getName().size(); i++)
+			cout << ' ';
+		for (int i = 0; i < (paddle2->getName().size() - to_string(score2).size()) / 2; i++)
+			cout << ' ';
+		cout << score2;
+		for (int i = 0; i < paddle2->getName().size() - ((paddle2->getName().size() - to_string(score2).size()) / 2) - to_string(score2).size(); i++)
+			cout << ' ';
+		cout << endl;
 	}
-	PongManager(int width, int height) : PongManager(width, height, "Player 1", "Player 2")
-	{}
-	~PongManager()
+	void drawPixel(int x, int y, char c)
 	{
-		delete ball, paddle1, paddle2;
+		COORD position;
+		position.X = x + 2;
+		position.Y = y + 1;
+		SetConsoleCursorPosition(hOut, position);
+		cout << c;
 	}
-	void startPong() { ball->move(); }
+	void drawUpdate()
+	{
+		drawPixel(ballX, ballY, cEmptySpace);
+		ballX = ball->getX();
+		ballY = ball->getY();
+		drawPixel(ballX, ballY, cBall);
+		if (paddle1->getY() == p1Y + 1)
+		{
+			p1Y = paddle1->getY();
+			drawPixel(0, p1Y - 3, cEmptySpace);
+			drawPixel(0, p1Y + 2, cPaddle);
+		}
+		else if (paddle1->getY() == p1Y - 1)
+		{
+			p1Y = paddle1->getY();
+			drawPixel(0, p1Y + 3, cEmptySpace);
+			drawPixel(0, p1Y - 2, cPaddle);
+		}
+		if (paddle2->getY() == p2Y + 1)
+		{
+			p2Y = paddle2->getY();
+			drawPixel(width - 1, p2Y - 3, cEmptySpace);
+			drawPixel(width - 1, p2Y + 2, cPaddle);
+		}
+		else if (paddle2->getY() == p2Y - 1)
+		{
+			p2Y = paddle2->getY();
+			drawPixel(width - 1, p2Y + 3, cEmptySpace);
+			drawPixel(width - 1, p2Y - 2, cPaddle);
+		}
+		Sleep(100);
+	}
+	void score(PongPaddle *paddle)
+	{
+		if (paddle == paddle1)
+			score1++;
+		else if (paddle == paddle2)
+			score2++;
+		ball->reset();
+		paddle1->reset();
+		paddle2->reset();
+		ballX = ball->getX();
+		ballY = ball->getY();
+		p1Y = paddle1->getY();
+		p2Y = paddle2->getY();
+		drawInit();
+	}
 	void input()
 	{
 		if (_kbhit())
@@ -173,93 +263,47 @@ public:
 			ball->bounceY();
 		ball->move();
 	}
-	void draw()
+public:
+	PongManager(int width, int height, string player1, string player2)
 	{
 		system("cls");
-		cout << endl;
-		for (int j = 0; j < width + 4; j++)
-			cout << '\xB2';
-		cout << endl;
-		for (int i = 0; i < height; i++)
-		{
-			cout << '\xB2' << ' ';
-			for (int j = 0; j < width; j++)
-			{
-				if (i == ball->getY() && j == ball->getX())
-					cout << 'o';
-				else if (j == 0 && paddle1->getY() - 2 <= i && i <= paddle1->getY() + 2)
-					cout << '\xDB';
-				else if (j == width - 1 && paddle2->getY() - 2 <= i && i <= paddle2->getY() + 2)
-					cout << '\xDB';
-				else
-					cout << ' ';
-			}
-			cout << ' ' << '\xB2' << endl;
-		}
-		for (int j = 0; j < width + 4; j++)
-			cout << '\xB2';
-		cout << endl << ' ';
-		cout << paddle1->getName();
-		for (int i = 0; i < width + 2 - paddle1->getName().size() - paddle2->getName().size(); i++)
-			cout << ' ';
-		cout << paddle2->getName() << ' ' << endl << ' ';
-		for (int i = 0; i < (paddle1->getName().size() - to_string(score1).size()) / 2; i++)
-			cout << ' ';
-		cout << score1;
-		for (int i = 0; i < paddle1->getName().size() - ((paddle1->getName().size() - to_string(score1).size()) / 2) - to_string(score1).size(); i++)
-			cout << ' ';
-		for (int i = 0; i < width + 2 - paddle1->getName().size() - paddle2->getName().size(); i++)
-			cout << ' ';
-		for (int i = 0; i < (paddle2->getName().size() - to_string(score2).size()) / 2; i++)
-			cout << ' ';
-		cout << score2;
-		for (int i = 0; i < paddle2->getName().size() - ((paddle2->getName().size() - to_string(score2).size()) / 2) - to_string(score2).size(); i++)
-			cout << ' ';
-		cout << endl;
+		srand(time(NULL));
+		this->width = (2 * width) + 1;
+		this->height = (2 * height) + 1;
+		score1 = score2 = 0;
+		ball = new PongBall(width, height);
+		paddle1 = new PongPaddle(height, player1);
+		paddle2 = new PongPaddle(height, player2);
+		ballX = width;
+		ballY = height;
+		p1Y = p2Y = height;
+		paddle1Up = 'w';
+		paddle1Down = 's';
+		paddle2Up = 'i';
+		paddle2Down = 'k';
+		quit = 'q';
+		gameOver = false;
+		drawInit();
 	}
-	void score(PongPaddle *paddle)
+	PongManager(int width, int height) : PongManager(width, height, "Player 1", "Player 2")
+	{}
+	~PongManager()
 	{
-		if (paddle == paddle1)
-			score1++;
-		else if (paddle == paddle2)
-			score2++;
-		ball->reset();
-		paddle1->reset();
-		paddle2->reset();
+		delete ball, paddle1, paddle2;
 	}
 	void run()
 	{
 		while (!gameOver)
 		{
-			draw();
+			drawUpdate();
 			input();
 			nextMove();
 		}
+		drawInit();
 	}
 };
 int main(int argc, char const *argv[])
 {
-	// PongBall* ball = new PongBall(23, 35);
-	// for (int i = 0; i < 10; i++)
-	// {
-	// 	cout << ball << endl;
-	// 	ball->move();
-	// }
-	// ball->reset();
-	// for (int i = 0; i < 10; i++)
-	// {
-	// 	cout << ball << endl;
-	// 	ball->move();
-	// }
-	// PongPaddle* paddle = new PongPaddle(0, 35);
-	// for (int i = 0; i < 10; i++)
-	// {
-	// 	cout << paddle << endl;
-	// 	if (rand() % 2)
-	// 		paddle->moveUp();
-	// 	else
-	// 		paddle->moveDown();
-	// }
 	PongManager* manager = new PongManager(30, 10, "ME", "YOU");
 	manager->run();
 	return 0;
