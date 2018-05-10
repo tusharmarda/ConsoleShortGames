@@ -112,44 +112,45 @@ private:
 		position.Y = 0;
 		SetConsoleCursorPosition(hOut, position);
 		for (int j = 0; j < width + 4; j++)
-			cout << cWall;
-		cout << endl;
+			printf("%c", cWall);
+		printf("\n");
 		for (int i = 0; i < height; i++)
 		{
-			cout << cWall << cEmptySpace;
+			printf("%c%c", cWall, cEmptySpace);
 			for (int j = 0; j < width; j++)
 			{
 				if (i == ball->getY() && j == ball->getX())
-					cout << cBall;
+					printf("%c", cBall);
 				else if (j == 0 && paddle1->getY() - 2 <= i && i <= paddle1->getY() + 2)
-					cout << cPaddle;
+					printf("%c", cPaddle);
 				else if (j == width - 1 && paddle2->getY() - 2 <= i && i <= paddle2->getY() + 2)
-					cout << cPaddle;
+					printf("%c", cPaddle);
 				else
-					cout << cEmptySpace;
+					printf("%c", cEmptySpace);
 			}
-			cout << cEmptySpace << cWall << endl;
+			printf("%c%c\n", cEmptySpace, cWall);
 		}
 		for (int j = 0; j < width + 4; j++)
-			cout << cWall;
-		cout << endl << ' ';
+			printf("%c", cWall);
+		printf("\n%c", cEmptySpace);
 		cout << paddle1->getName();
 		for (int i = 0; i < width + 2 - paddle1->getName().size() - paddle2->getName().size(); i++)
-			cout << ' ';
-		cout << paddle2->getName() << ' ' << endl << ' ';
+			printf("%c", cEmptySpace);
+		cout << paddle2->getName();
+		printf("%c\n%c", cEmptySpace, cEmptySpace);
 		for (int i = 0; i < (paddle1->getName().size() - to_string(score1).size()) / 2; i++)
-			cout << ' ';
-		cout << score1;
+			printf("%c", cEmptySpace);
+		printf("%d", score1);
 		for (int i = 0; i < paddle1->getName().size() - ((paddle1->getName().size() - to_string(score1).size()) / 2) - to_string(score1).size(); i++)
-			cout << ' ';
+			printf("%c", cEmptySpace);
 		for (int i = 0; i < width + 2 - paddle1->getName().size() - paddle2->getName().size(); i++)
-			cout << ' ';
+			printf("%c", cEmptySpace);
 		for (int i = 0; i < (paddle2->getName().size() - to_string(score2).size()) / 2; i++)
-			cout << ' ';
-		cout << score2;
+			printf("%c", cEmptySpace);
+		printf("%d", score2);
 		for (int i = 0; i < paddle2->getName().size() - ((paddle2->getName().size() - to_string(score2).size()) / 2) - to_string(score2).size(); i++)
-			cout << ' ';
-		cout << endl;
+			printf("%c", cEmptySpace);
+		printf("\n");
 	}
 	void drawPixel(int x, int y, char c)
 	{
@@ -157,7 +158,7 @@ private:
 		position.X = x + 2;
 		position.Y = y + 1;
 		SetConsoleCursorPosition(hOut, position);
-		cout << c;
+		printf("%c", c);
 	}
 	void drawUpdate()
 	{
